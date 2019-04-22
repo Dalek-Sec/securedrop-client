@@ -28,10 +28,11 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import Qt, QTimer
 from logging.handlers import TimedRotatingFileHandler
 from securedrop_client import __version__
-from securedrop_client.logic import Client
-from securedrop_client.gui.main import Window
-from securedrop_client.resources import load_icon, load_css
 from securedrop_client.db import make_engine
+from securedrop_client.gui.main import Window
+from securedrop_client.logic import Client
+from securedrop_client.queue import ApiJobQueue
+from securedrop_client.resources import load_icon, load_css
 from securedrop_client.utils import safe_mkdir
 
 DEFAULT_SDC_HOME = '~/.securedrop_client'
@@ -171,6 +172,9 @@ def start_app(args, qt_args) -> None:
     client = Client("http://localhost:8081/", gui, session,
                     args.sdc_home, not args.no_proxy)
     client.setup()
+
+    queue = ApiJobQueue(client)
+    queue.start_queues()
 
     configure_signal_handlers(app)
     timer = QTimer()
