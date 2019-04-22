@@ -12,7 +12,7 @@ class ApiJob:
 
     def _do_call_api(self, api_client: API) -> None:
         try:
-            result = ApiJob.call_api(api_client, self.nargs, self.kwargs)
+            result = self.call_api(api_client, self.nargs, self.kwargs)
         except Exception as e:
             self.handle_failure(e)
         else:
@@ -20,6 +20,14 @@ class ApiJob:
 
     @staticmethod
     def call_api(api_client: API, nargs: list, kwargs: dict) -> Any:
+        raise NotImplementedError
+
+    @staticmethod
+    def handle_success(self, result: Any) -> None:
+        raise NotImplementedError
+
+    @staticmethod
+    def handle_failure(self, exception: Exception) -> None:
         raise NotImplementedError
 
 
@@ -34,6 +42,7 @@ class RunnableQueue(QObject):
 
     def __init__(self, api_client: API) -> None:
         super().__init__()
+        self.api_client = api_client
         self.queue = Queue()
 
     def __call__(self, loop: bool = True) -> None:
@@ -52,7 +61,7 @@ class ApiJobQueue(QObject):
         self.main_queue = RunnableQueue(self.api_client)
         self.download_queue = RunnableQueue(self.api_client)
 
-    def start_queues(self, loop: bool = True) -> None:
+    def start_queues(self) -> None:
         main_thread = QThread(self)
         download_thread = QThread(self)
 
