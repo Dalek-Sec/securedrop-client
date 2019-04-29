@@ -671,27 +671,39 @@ class SourceList(QListWidget):
 
     def update(self, sources: List[Source]):
         """
-        Reset and update the list with the passed in list of sources.
+        Update the source list with the provided list of sources and reselect the source that was
+        selected before the update if it still exists, otherwise select the first source in the list
+        if it exists, otherwise select nothing (because the source list is empty).
         """
-        current_maybe = self.currentItem() and self.itemWidget(self.currentItem())
+        selected_item = self.currentItem()
+        selected_source_widget = selected_item and self.itemWidget(selected_item)
+        selected_source_id = selected_source_widget and selected_source_widget.source.id
+
         self.clear()
 
-        new_current_maybe = None
+        item_to_select = None
+        first_item = None
+
         for source in sources:
-            new_source = SourceWidget(source)
-            new_source.setup(self.controller)
+            source_widget = SourceWidget(source)
+            source_widget.setup(self.controller)
 
-            list_item = QListWidgetItem(self)
-            list_item.setSizeHint(new_source.sizeHint())
+            item = QListWidgetItem(self)
+            item.setSizeHint(source_widget.sizeHint())
 
-            self.addItem(list_item)
-            self.setItemWidget(list_item, new_source)
+            self.addItem(item)
+            self.setItemWidget(item, source_widget)
 
-            if current_maybe and (source.id == current_maybe.source.id):
-                new_current_maybe = list_item
+            if not first_item:
+                first_item = item
 
-        if new_current_maybe:
-            self.setCurrentItem(new_current_maybe)
+            if source.id == selected_source_id:
+                item_to_select = item
+
+        if item_to_select:
+            self.setCurrentItem(item_to_select)
+        elif first_item:
+            self.setCurrentItem(first_item)
 
 
 class SourceWidget(QWidget):
